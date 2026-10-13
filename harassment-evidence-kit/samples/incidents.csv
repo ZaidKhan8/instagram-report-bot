@@ -1,0 +1,4 @@
+date,time,platform,handle,description,file
+2026-09-02,22:14,Instagram,@example_handle,"Repeated abusive messages after I asked them to stop. Sender handle visible at the top of the chat.",sample_01_instagram.png
+2026-09-05,09:41,WhatsApp,+91-00000-00000,"Threatening message: said they would not leave me alone. Mobile number visible in the chat header.",sample_02_whatsapp.png
+2026-09-07,18:02,Instagram,@example_handle_alt,"New account created after I blocked the first one; same abusive content.",sample_03_instagram.png

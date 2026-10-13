@@ -1,0 +1,15 @@
+{
+  "name": "YOUR NAME (edit this file)",
+  "phone": "+91-00000-00000",
+  "email": "you@example.com",
+  "address": "Your address, city, state, PIN",
+  "id_proof": "Aadhaar (last 4 digits) / Passport / DL",
+  "accused_name": "Not known",
+  "accused_address": "Not known",
+  "impact": "Edit this: explain in your own words how this has affected your safety, sleep, work and daily life.",
+  "place": "Your city",
+  "authority": "The Station House Officer / In-charge, Cyber Crime Cell",
+  "prior_complaint": "None",
+  "platform_reports": "Reports filed in-app on 02-09-2026 and 07-09-2026; blocked both accounts.",
+  "threats": "yes"
+}
