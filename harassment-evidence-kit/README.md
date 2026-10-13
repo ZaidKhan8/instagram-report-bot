@@ -67,6 +67,97 @@ python3 shuru.py --rebuild  # naye screenshots jode hain to dobara banao
 
 ---
 
+## Termux (Android phone) — poora setup, ek-ek line
+
+F-Droid ya GitHub se **Termux** install kariye, kholiye, aur ye lines ek-ek karke
+paste kariye (har line ke baad Enter):
+
+**1. Python aur git install:**
+
+```bash
+pkg update -y && pkg install -y python git
+```
+
+**2. Phone ki storage ka access dijiye** (popup aayega — "Allow" dabaiye):
+
+```bash
+termux-setup-storage
+```
+
+**3. Tool laaiye:**
+
+```bash
+git clone -q -b arena/e256f896-instagram-report-bot https://github.com/ZaidKhan8/instagram-report-bot && cd instagram-report-bot/harassment-evidence-kit
+```
+
+**4. Case folder banaaiye:**
+
+```bash
+python shuru.py
+```
+
+**5. Apne phone ke screenshots us folder me copy kariye** (Samsung/Pixel dono ke
+liye — jo folder maujood ho wahi copy hoga):
+
+```bash
+shopt -s nullglob; cp ~/storage/dcim/Screenshots/* ~/storage/pictures/Screenshots/* mera-case/screenshots/ 2>/dev/null; ls mera-case/screenshots/ | wc -l
+```
+
+Aakhri number batayega kitne screenshots copy hue. Kuch na dikhe to apne phone me
+screenshots kahan hain wo dhoondhiye:
+
+```bash
+find ~/storage -iname "*screenshot*" -maxdepth 4 -type d 2>/dev/null
+```
+
+**6. Incidents likhiye** (nano editor; `Ctrl+O` Enter se save, `Ctrl+X` se bahar):
+
+```bash
+nano mera-case/incidents.csv
+```
+
+**7. Apna naam/phone/address likhiye:**
+
+```bash
+nano mera-case/case.json
+```
+
+**8. Bundle banaaiye:**
+
+```bash
+python shuru.py
+```
+
+**9. PDF dekhne/bhejne ke liye kholiye:**
+
+```bash
+termux-open mera-case/out/evidence_bundle.pdf
+```
+
+Isse PDF phone ke kisi bhi app (Drive, WhatsApp, Gmail) me khul jaayega — wahan se
+print ya share kar lijiye. Complaint padhne ke liye:
+
+```bash
+cat mera-case/out/platform_report.txt
+```
+
+Ya poora complaint draft (WhatsApp me bhejne ke liye):
+
+```bash
+termux-open mera-case/out/complaint_draft.md
+```
+
+**Naye screenshots jode? Dobara banao:**
+
+```bash
+python shuru.py --rebuild
+```
+
+> **Tip:** Termux me paste karne ke liye screen par long-press kariye → Paste, ya
+> volume-down + `V` (Termux keyboard me) dabaiye.
+
+---
+
 ## Manual use
 
 ```bash
