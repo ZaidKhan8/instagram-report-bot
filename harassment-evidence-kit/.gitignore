@@ -1,0 +1,4 @@
+out/
+mera-case/
+__pycache__/
+*.pyc
