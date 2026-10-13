@@ -35,7 +35,39 @@ builds that record from what you already have on your phone.
 python3 --version        # 3.8 or newer
 ```
 
-## Use it
+## Quick start (sabse aasan tarika)
+
+Ek hi command — ye aapke liye kaam karne ka folder khud bana dega:
+
+```bash
+cd harassment-evidence-kit
+python3 shuru.py
+```
+
+Pehli baar chalane par `mera-case/` folder ban jaata hai:
+
+```
+mera-case/
+  screenshots/       <- apne screenshots yahan daaliye
+  incidents.csv      <- Notepad se kholkar apni incidents likhiye
+  case.json          <- apna naam, phone, address, impact likhiye
+  SHURU-KARIYE.txt   <- poore steps, aasan bhasha mein
+  out/               <- bundle yahan banega
+```
+
+Screenshots daal kar aur files edit kar ke, wahi command dobara chalaiye:
+
+```bash
+python3 shuru.py            # bundle ban gaya
+python3 shuru.py --rebuild  # naye screenshots jode hain to dobara banao
+```
+
+- **Windows:** `CHALAO-WINDOWS.bat` par double-click kariye.
+- **Mac/Linux:** `chalao-mac-linux.command` chala lijiye.
+
+---
+
+## Manual use
 
 ```bash
 cd harassment-evidence-kit
@@ -176,6 +208,9 @@ platform must preserve the records.
 
 ```
 harassment-evidence-kit/
+├── shuru.py               # one-command start: sets up mera-case/ then builds
+├── CHALAO-WINDOWS.bat     # double-click launcher (Windows)
+├── chalao-mac-linux.command  # launcher (Mac/Linux)
 ├── evidence_kit.py        # CLI: build + verify, complaint and report text
 ├── pdfwriter.py           # dependency-free PDF writer + image decoder
 ├── selftest.py            # 20 structural/behavioural checks
@@ -184,4 +219,8 @@ harassment-evidence-kit/
 │   ├── incidents.csv      # example log
 │   └── case.json          # example complainant details
 └── out/                   # generated output (not committed)
+```
+
+`mera-case/` (your real case folder) and generated output are gitignored —
+your screenshots and complaint never leave your machine and never enter the repo.
 ```

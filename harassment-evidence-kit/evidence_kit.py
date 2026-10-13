@@ -32,6 +32,7 @@ import argparse
 import csv
 import datetime as dt
 import hashlib
+import io
 import json
 import os
 import re
@@ -114,55 +115,72 @@ def read_incidents(path: str) -> Tuple[List[Dict[str, str]], List[str]]:
         return [], [f"Incident log not found at '{path}' — bundle will only contain screenshots."]
 
     with open(path, newline="", encoding="utf-8-sig") as fh:
-        sample = fh.read(4096)
-        fh.seek(0)
-        try:
-            dialect = csv.Sniffer().sniff(sample, delimiters=",;\t")
-        except csv.Error:
-            dialect = csv.excel
-        reader = csv.DictReader(fh, dialect=dialect)
+        # Lines starting with '#' are guidance, not incidents. The shipped
+        # template is full of them, and they must never end up in someone's
+        # complaint as if they were real events.
+        kept = [line for line in fh if not line.lstrip().startswith("#")]
+        text = "".join(kept)
 
-        if not reader.fieldnames:
-            return [], [f"'{path}' is empty."]
+    if not text.strip():
+        return [], [
+            f"'{path}' has no incident rows yet — it still contains only guidance lines. "
+            "Add one line per incident: date, time, platform, handle, description, file."
+        ]
 
-        header_map = {}
-        for field in reader.fieldnames:
-            key = (field or "").strip().lower().replace(" ", "_")
-            aliases = {
-                "date": "date",
-                "datetime": "date",
-                "time": "time",
-                "platform": "platform",
-                "app": "platform",
-                "handle": "handle",
-                "username": "handle",
-                "account": "handle",
-                "description": "description",
-                "what_happened": "description",
-                "message": "description",
-                "file": "file",
-                "screenshot": "file",
-                "image": "file",
-                "filename": "file",
-            }
-            if key in aliases:
-                header_map[field] = aliases[key]
+    reader = csv.DictReader(io.StringIO(text))
+    if not reader.fieldnames:
+        return [], [f"'{path}' is empty."]
 
-        records: List[Dict[str, str]] = []
-        for row in reader:
-            if not any((v or "").strip() for v in row.values()):
-                continue
-            record = {name: "" for name in INCIDENT_FIELDS}
-            for raw_key, value in row.items():
-                mapped = header_map.get(raw_key)
-                if mapped:
-                    record[mapped] = (value or "").strip()
-            if not record["date"]:
-                warnings.append(
-                    f"An incident entry (file: {record['file'] or 'n/a'}) has no date — "
-                    "undated entries carry much less weight; please add the date."
-                )
-            records.append(record)
+    header_map = {}
+    for field in reader.fieldnames:
+        key = (field or "").strip().lower().replace(" ", "_")
+        aliases = {
+            "date": "date",
+            "datetime": "date",
+            "time": "time",
+            "platform": "platform",
+            "app": "platform",
+            "handle": "handle",
+            "username": "handle",
+            "account": "handle",
+            "description": "description",
+            "what_happened": "description",
+            "message": "description",
+            "file": "file",
+            "screenshot": "file",
+            "image": "file",
+            "filename": "file",
+        }
+        if key in aliases:
+            header_map[field] = aliases[key]
+
+    records: List[Dict[str, str]] = []
+    for row in reader:
+        if not any((v or "").strip() for v in row.values()):
+            continue
+        record = {name: "" for name in INCIDENT_FIELDS}
+        for raw_key, value in row.items():
+            mapped = header_map.get(raw_key)
+            if mapped:
+                record[mapped] = (value or "").strip()
+        if record["description"].upper().startswith("EXAMPLE ROW"):
+            warnings.append(
+                "Incidents log still contains EXAMPLE rows — delete them before filing, "
+                "otherwise your complaint will list events that never happened."
+            )
+        if not record["date"]:
+            warnings.append(
+                f"An incident entry (file: {record['file'] or 'n/a'}) has no date — "
+                "undated entries carry much less weight; please add the date."
+            )
+        records.append(record)
+
+    if not records:
+        warnings.append(
+            "The incident log has a header but no incident rows — every screenshot will be "
+            "listed as 'not described'. Add one line per incident (date, time, platform, "
+            "handle, description, file) so the bundle tells a story."
+        )
 
     return records, warnings
 
