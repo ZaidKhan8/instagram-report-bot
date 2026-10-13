@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Text → Video Studio</title>
+<style>
+  :root{
+    --bg:#0b0f19; --panel:#141a28; --panel2:#1b2233; --line:#28324a;
+    --text:#e8edf7; --dim:#94a3b8; --accent:#ff3b6b; --ok:#22c55e; --warn:#f59e0b;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif}
+  header{padding:18px 16px 10px;border-bottom:1px solid var(--line);position:sticky;top:0;background:linear-gradient(180deg,#0b0f19f2,#0b0f19d9);backdrop-filter:blur(8px);z-index:5}
+  h1{margin:0;font-size:19px;letter-spacing:.2px}
+  h1 span{color:var(--accent)}
+  .sub{color:var(--dim);font-size:12.5px;margin-top:3px}
+  main{max-width:960px;margin:0 auto;padding:16px 14px 90px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:14px}
+  .card h2{margin:0 0 10px;font-size:14px;text-transform:uppercase;letter-spacing:.8px;color:var(--dim)}
+  .grid{display:grid;gap:10px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:1fr 1fr 1fr}
+  @media(max-width:640px){.g2,.g3{grid-template-columns:1fr}}
+  label{display:block;font-size:12px;color:var(--dim);margin-bottom:4px}
+  input[type=text],input[type=number],textarea,select{
+    width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    border-radius:10px;padding:9px 10px;font:inherit
+  }
+  textarea{min-height:74px;resize:vertical;line-height:1.45}
+  input[type=range]{width:100%}
+  input[type=color]{width:100%;height:38px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:2px}
+  input[type=file]{width:100%;font-size:12.5px;color:var(--dim)}
+  button{
+    background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;
+    padding:10px 14px;font:inherit;font-weight:600;cursor:pointer
+  }
+  button:hover{border-color:#3b4a6b}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.primary:disabled{opacity:.55;cursor:not-allowed}
+  button.ghost{background:transparent}
+  button.tiny{padding:5px 9px;font-size:12px;font-weight:500}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .spacer{flex:1}
+  .scene{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+  .scene .head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .scene .num{background:var(--accent);color:#fff;border-radius:8px;font-size:12px;font-weight:700;padding:3px 8px}
+  .thumbs{display:flex;gap:8px;align-items:center;margin-top:8px}
+  .thumbs img{height:56px;border-radius:8px;border:1px solid var(--line)}
+  .bar{height:12px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;overflow:hidden}
+  .bar>div{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),#ff7b54);transition:width .25s}
+  .status{font-size:13px;color:var(--dim);margin-top:7px;min-height:18px;white-space:pre-wrap}
+  .pill{font-size:11.5px;padding:3px 8px;border-radius:999px;border:1px solid var(--line);color:var(--dim)}
+  .pill.ok{color:var(--ok);border-color:#1f5136}
+  .pill.bad{color:var(--warn);border-color:#5a3d10}
+  video{width:100%;border-radius:12px;background:#000;margin-top:10px}
+  #previewWrap{display:none;margin-top:10px;text-align:center}
+  #previewWrap img{max-width:min(320px,80vw);border-radius:12px;border:1px solid var(--line)}
+  footer{position:fixed;bottom:0;left:0;right:0;background:#0b0f19f0;border-top:1px solid var(--line);padding:10px 14px;display:flex;gap:10px;align-items:center;backdrop-filter:blur(8px)}
+  footer .note{font-size:11.5px;color:var(--dim)}
+  .warnbox{background:#2a1e05;border:1px solid #5a3d10;color:#fcd34d;border-radius:10px;padding:10px;font-size:13px;margin-bottom:12px;display:none;white-space:pre-wrap}
+  details summary{cursor:pointer;color:var(--dim);font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Text → <span>Video</span> Studio</h1>
+  <div class="sub">Aapke device par banta hai · koi credit nahi · koi limit nahi · koi internet nahi</div>
+  <div class="row" style="margin-top:8px" id="envRow"></div>
+</header>
+
+<main>
+  <div class="warnbox" id="warnbox"></div>
+
+  <div class="card">
+    <h2>Video settings</h2>
+    <div class="grid g3">
+      <div>
+        <label>Aspect ratio</label>
+        <select id="aspect">
+          <option value="9:16">9:16 — Reels / Shorts (vertical)</option>
+          <option value="16:9">16:9 — YouTube / landscape</option>
+          <option value="1:1">1:1 — Square post</option>
+        </select>
+      </div>
+      <div>
+        <label>Quality</label>
+        <select id="quality">
+          <option value="medium">Medium (720p — recommended)</option>
+          <option value="high">High (1080p — slow on phone)</option>
+          <option value="fast">Fast (540p — sabse tez)</option>
+        </select>
+      </div>
+      <div>
+        <label>Theme</label>
+        <select id="theme"></select>
+      </div>
+    </div>
+    <div class="grid g3" style="margin-top:10px">
+      <div>
+        <label>Background</label>
+        <input type="color" id="cBg" value="#0b1020">
+      </div>
+      <div>
+        <label>Background 2</label>
+        <input type="color" id="cBg2" value="#1b2b52">
+      </div>
+      <div>
+        <label>Accent / text / subtitle</label>
+        <div class="row">
+          <input type="color" id="cAccent" value="#ff3b6b" style="flex:1">
+          <input type="color" id="cText" value="#ffffff" style="flex:1">
+          <input type="color" id="cSub" value="#c9d4e6" style="flex:1">
+        </div>
+      </div>
+    </div>
+    <div class="grid g3" style="margin-top:10px">
+      <div>
+        <label>Frames per second</label>
+        <input type="number" id="fps" value="30" min="12" max="60">
+      </div>
+      <div>
+        <label>Font</label>
+        <select id="font"><option value="">Auto (Hindi/English khud chune)</option></select>
+      </div>
+      <div>
+        <label>Background music (optional)</label>
+        <input type="file" id="music" accept="audio/*">
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <label>Music volume: <span id="musicVolLabel">30%</span></label>
+      <input type="range" id="musicVol" min="0" max="100" value="30">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="margin-bottom:10px">
+      <h2 style="margin:0">Scenes</h2>
+      <div class="spacer"></div>
+      <button class="tiny" id="addScene">+ Scene jodiye</button>
+    </div>
+    <div id="scenes"></div>
+  </div>
+
+  <div class="card" id="voiceCard">
+    <h2>Voiceover (optional)</h2>
+    <div class="row">
+      <label class="row" style="gap:6px;color:var(--text)">
+        <input type="checkbox" id="voOn"> Text ko bol kar sunaiye
+      </label>
+      <span class="pill" id="voPill">espeak check kar raha hoon…</span>
+    </div>
+    <div class="grid g3" style="margin-top:10px">
+      <div>
+        <label>Voice language</label>
+        <select id="voVoice">
+          <option value="hi">Hindi (hi)</option>
+          <option value="hi+f3">Hindi (female)</option>
+          <option value="en">English (en)</option>
+          <option value="en+f3">English (female)</option>
+        </select>
+      </div>
+      <div>
+        <label>Speed</label>
+        <input type="number" id="voSpeed" value="150" min="80" max="260">
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <label class="row" style="gap:6px;color:var(--text)">
+          <input type="checkbox" id="voExtend" checked> Scene ko awaaz ke hisaab se lamba karo
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <details class="card">
+    <summary>Project save / load</summary>
+    <div class="row" style="margin-top:10px">
+      <input type="text" id="projectName" placeholder="project ka naam" style="max-width:240px">
+      <button class="tiny" id="saveProject">Save</button>
+      <button class="tiny" id="loadProject">Load</button>
+      <span class="pill" id="projectPill"></span>
+    </div>
+  </details>
+
+  <div class="card">
+    <h2>Preview aur render</h2>
+    <div class="row">
+      <button id="previewBtn">Pehle scene ka preview</button>
+      <button class="primary" id="renderBtn">Video banao</button>
+      <span class="pill" id="durPill"></span>
+    </div>
+    <div id="previewWrap"><img id="previewImg" alt="preview"></div>
+    <div class="bar" style="margin-top:12px"><div id="bar"></div></div>
+    <div class="status" id="status">Taiyaar.</div>
+    <div id="resultWrap"></div>
+  </div>
+</main>
+
+<footer>
+  <span class="note">Sab kuch is device par banta hai — koi upload nahi, koi account nahi, koi credit nahi.</span>
+</footer>
+
+<script>
+const state = { scenes: [] };
+const $ = (id) => document.getElementById(id);
+
+/* ---------- scene list ---------- */
+function newScene() {
+  return { text: "", sub: "", duration: 3.5, animation: "slide-up",
+           transition: "fade", text_position: "center", image: null, imageName: "" };
+}
+function renderScenes() {
+  const wrap = $("scenes");
+  wrap.innerHTML = "";
+  state.scenes.forEach((scene, i) => {
+    const el = document.createElement("div");
+    el.className = "scene";
+    el.innerHTML = `
+      <div class="head">
+        <span class="num">${i + 1}</span>
+        <span class="spacer"></span>
+        <button class="tiny ghost" data-act="up">↑</button>
+        <button class="tiny ghost" data-act="down">↓</button>
+        <button class="tiny ghost" data-act="copy">copy</button>
+        <button class="tiny ghost" data-act="del">delete</button>
+      </div>
+      <label>Text (badе akshar)</label>
+      <textarea data-f="text" placeholder="Yahan apna text likhiye…">${escapeHtml(scene.text)}</textarea>
+      <div class="grid g2" style="margin-top:8px">
+        <div>
+          <label>Chhota subtitle (optional)</label>
+          <input type="text" data-f="sub" value="${escapeAttr(scene.sub)}" placeholder="ek line niche">
+        </div>
+        <div>
+          <label>Kitne second</label>
+          <input type="number" data-f="duration" step="0.5" min="0.8" max="60" value="${scene.duration}">
+        </div>
+      </div>
+      <div class="grid g3" style="margin-top:8px">
+        <div>
+          <label>Text animation</label>
+          <select data-f="animation">
+            ${opt(["slide-up","fade","pop","typewriter","none"], scene.animation)}
+          </select>
+        </div>
+        <div>
+          <label>Transition (pichhle scene se)</label>
+          <select data-f="transition">${opt(["fade","slide","zoom","none"], scene.transition)}</select>
+        </div>
+        <div>
+          <label>Text ki jagah</label>
+          <select data-f="text_position">${opt(["center","top","bottom"], scene.text_position)}</select>
+        </div>
+      </div>
+      <div class="thumbs">
+        <input type="file" accept="image/*" data-f="image">
+        ${scene.image ? `<img src="${scene.image}" alt=""><button class="tiny ghost" data-act="rmimg">image hataiye</button>` : `<span class="pill">background image optional — nahi to gradient chalega</span>`}
+      </div>`;
+    el.querySelectorAll("[data-f]").forEach((input) => {
+      input.addEventListener("input", () => {
+        const f = input.dataset.f;
+        if (f === "duration") scene.duration = parseFloat(input.value) || 3.5;
+        else if (f === "image") { /* handled below */ }
+        else scene[f] = input.value;
+        if (f === "text") updateDurationPill();
+      });
+      if (input.dataset.f === "image") {
+        input.addEventListener("change", () => {
+          const file = input.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = () => { scene.image = reader.result; scene.imageName = file.name; renderScenes(); };
+          reader.readAsDataURL(file);
+        });
+      }
+    });
+    el.querySelectorAll("[data-act]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const act = btn.dataset.act;
+        if (act === "del" && state.scenes.length > 1) state.scenes.splice(i, 1);
+        if (act === "copy") state.scenes.splice(i + 1, 0, JSON.parse(JSON.stringify(scene)));
+        if (act === "up" && i > 0) { const [s] = state.scenes.splice(i, 1); state.scenes.splice(i - 1, 0, s); }
+        if (act === "down" && i < state.scenes.length - 1) { const [s] = state.scenes.splice(i, 1); state.scenes.splice(i + 1, 0, s); }
+        if (act === "rmimg") { scene.image = null; scene.imageName = ""; }
+        renderScenes();
+      });
+    });
+    wrap.appendChild(el);
+  });
+  updateDurationPill();
+}
+function opt(values, selected) {
+  return values.map((v) => `<option value="${v}"${v === selected ? " selected" : ""}>${v}</option>`).join("");
+}
+function escapeHtml(s) { return String(s || "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
+function escapeAttr(s) { return escapeHtml(s).replace(/"/g, "&quot;"); }
+
+/* ---------- project payload ---------- */
+function buildProject() {
+  const themeName = $("theme").value;
+  return {
+    aspect: $("aspect").value,
+    quality: $("quality").value,
+    fps: parseInt($("fps").value) || 30,
+    theme: themeName,
+    theme_overrides: {
+      bg: $("cBg").value, bg2: $("cBg2").value,
+      accent: $("cAccent").value, text: $("cText").value, sub: $("cSub").value
+    },
+    font: $("font").value || undefined,
+    music: musicData || undefined,
+    music_volume: (parseInt($("musicVol").value) || 0) / 100,
+    voiceover: $("voOn").checked
+      ? { engine: "espeak", voice: $("voVoice").value, speed: parseInt($("voSpeed").value) || 150,
+          auto_extend: $("voExtend").checked }
+      : null,
+    scenes: state.scenes.map((s) => ({
+      text: s.text, sub: s.sub, image: s.image || undefined,
+      duration: parseFloat(s.duration) || 3.5,
+      animation: s.animation, transition: s.transition, text_position: s.text_position
+    }))
+  };
+}
+let musicData = null;
+
+function updateDurationPill() {
+  const total = state.scenes.reduce((sum, s) => sum + (parseFloat(s.duration) || 0), 0);
+  $("durPill").textContent = `Total: ${total.toFixed(1)} second (approx)`;
+}
+
+/* ---------- API ---------- */
+async function api(path, options) {
+  const res = await fetch(path, options);
+  const type = res.headers.get("content-type") || "";
+  if (type.includes("application/json")) {
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Server error");
+    return data;
+  }
+  if (!res.ok) throw new Error("Server error " + res.status);
+  return res;
+}
+function setStatus(text) { $("status").textContent = text; }
+function setBar(frac) { $("bar").style.width = Math.round(frac * 100) + "%"; }
+
+function showEnv(info) {
+  const row = $("envRow");
+  const pills = [
+    ["ffmpeg", info.ffmpeg], ["pillow", info.pillow],
+    ["hindi font", info.has_devanagari], ["hindi shaping (harfbuzz)", info.shaping],
+    ["voiceover (espeak)", info.espeak]
+  ];
+  row.innerHTML = pills.map(([name, ok]) =>
+    `<span class="pill ${ok ? "ok" : "bad"}">${name}: ${ok ? "ok" : "nahi"}</span>`).join("");
+  const problems = [];
+  if (!info.ffmpeg) problems.push("ffmpeg nahi mila → Termux: pkg install ffmpeg   (PC: ffmpeg.org)");
+  if (!info.pillow) problems.push("pillow nahi mila → Termux: pkg install python-pillow   (ya: pip install pillow)");
+  if (!info.has_devanagari) problems.push("Hindi font nahi mila → chalaiye: python3 get_fonts.py");
+  if (!info.shaping) problems.push("Hindi shaping nahi mili (" + (info.shaping_detail || "") + ") → Termux: pkg install harfbuzz   |   PC: pip install --upgrade pillow");
+  if (!info.espeak) problems.push("Voiceover chahiye to → Termux: pkg install espeak");
+  const box = $("warnbox");
+  if (problems.length) { box.style.display = "block"; box.textContent = "Dhyan dijiye:\n• " + problems.join("\n• "); }
+  else box.style.display = "none";
+  $("voPill").textContent = info.espeak ? "espeak mil gaya" : "espeak nahi hai (voiceover off rahega)";
+  $("voPill").className = "pill " + (info.espeak ? "ok" : "bad");
+  const fontSel = $("font");
+  fontSel.innerHTML = `<option value="">Auto (Hindi/English khud chune)</option>` +
+    info.fonts.map((f) => `<option value="${f}">${f}</option>`).join("");
+}
+
+/* ---------- actions ---------- */
+async function doPreview() {
+  try {
+    setStatus("Preview bana raha hoon…");
+    const res = await api("/api/preview", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ project: buildProject() })
+    });
+    const blob = await res.blob();
+    $("previewImg").src = URL.createObjectURL(blob);
+    $("previewWrap").style.display = "block";
+    setStatus("Preview taiyaar — neeche video banaiye.");
+  } catch (err) { setStatus("Preview fail: " + err.message); }
+}
+
+async function doRender() {
+  const btn = $("renderBtn");
+  btn.disabled = true;
+  $("resultWrap").innerHTML = "";
+  setBar(0);
+  try {
+    setStatus("Render shuru ho raha hai…");
+    const { job_id } = await api("/api/render", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ project: buildProject() })
+    });
+    let done = false;
+    while (!done) {
+      await new Promise((r) => setTimeout(r, 700));
+      const s = await api("/api/status?id=" + encodeURIComponent(job_id));
+      setBar(s.progress || 0);
+      setStatus(`${Math.round((s.progress || 0) * 100)}% — ${s.message || s.state}`);
+      if (s.state === "done") {
+        done = true;
+        const url = "/api/video?id=" + encodeURIComponent(job_id);
+        $("resultWrap").innerHTML = `
+          <video controls playsinline src="${url}"></video>
+          <div class="row" style="margin-top:10px">
+            <a href="${url}" download="video.mp4"><button class="primary">Download MP4</button></a>
+            <span class="pill">${(s.result && s.result.resolution) || ""} · ${(s.result && s.result.duration) || ""}s</span>
+          </div>`;
+        const warns = (s.result && s.result.warnings) || [];
+        setStatus(warns.length ? "Ban gaya. Dhyan dijiye:\n• " + warns.join("\n• ") : "Ho gaya! Video download kar lijiye.");
+      } else if (s.state === "error") {
+        done = true;
+        setStatus("Ruk gaya: " + s.message);
+      }
+    }
+  } catch (err) {
+    setStatus("Error: " + err.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function saveProject() {
+  const name = $("projectName").value.trim();
+  if (!name) { $("projectPill").textContent = "pehle naam likhiye"; return; }
+  try {
+    const data = await api("/api/project", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, project: buildProject() })
+    });
+    $("projectPill").textContent = "save ho gaya: " + data.saved;
+  } catch (err) { $("projectPill").textContent = "save fail: " + err.message; }
+}
+async function loadProject() {
+  const name = $("projectName").value.trim();
+  if (!name) { $("projectPill").textContent = "project ka naam likhiye"; return; }
+  try {
+    const data = await api("/api/project?name=" + encodeURIComponent(name));
+    applyProject(data.project);
+    $("projectPill").textContent = "load ho gaya: " + data.name;
+  } catch (err) { $("projectPill").textContent = "load fail: " + err.message; }
+}
+function applyProject(p) {
+  $("aspect").value = p.aspect || "9:16";
+  $("quality").value = p.quality || "medium";
+  $("fps").value = p.fps || 30;
+  if (p.theme) $("theme").value = p.theme;
+  const o = p.theme_overrides || {};
+  if (o.bg) $("cBg").value = o.bg;
+  if (o.bg2) $("cBg2").value = o.bg2;
+  if (o.accent) $("cAccent").value = o.accent;
+  if (o.text) $("cText").value = o.text;
+  if (o.sub) $("cSub").value = o.sub;
+  if (p.voiceover) {
+    $("voOn").checked = true;
+    $("voVoice").value = p.voiceover.voice || "hi";
+    $("voSpeed").value = p.voiceover.speed || 150;
+  } else $("voOn").checked = false;
+  state.scenes = (p.scenes || []).map((s) => Object.assign(newScene(), s, { imageName: "" }));
+  if (!state.scenes.length) state.scenes = [newScene()];
+  renderScenes();
+}
+
+/* ---------- boot ---------- */
+async function boot() {
+  state.scenes = [newScene(), newScene(), newScene()];
+  renderScenes();
+  try {
+    const info = await api("/api/info");
+    showEnv(info);
+    $("theme").innerHTML = info.themes.map((t) => `<option value="${t}">${t}</option>`).join("");
+    $("theme").value = "midnight";
+  } catch (err) {
+    $("warnbox").style.display = "block";
+    $("warnbox").textContent = "Server se baat nahi ho rahi: " + err.message;
+  }
+}
+$("addScene").addEventListener("click", () => { state.scenes.push(newScene()); renderScenes(); });
+$("previewBtn").addEventListener("click", doPreview);
+$("renderBtn").addEventListener("click", doRender);
+$("saveProject").addEventListener("click", saveProject);
+$("loadProject").addEventListener("click", loadProject);
+$("musicVol").addEventListener("input", () => { $("musicVolLabel").textContent = $("musicVol").value + "%"; });
+$("music").addEventListener("change", () => {
+  const file = $("music").files[0];
+  if (!file) { musicData = null; return; }
+  const reader = new FileReader();
+  reader.onload = () => { musicData = reader.result; };
+  reader.readAsDataURL(file);
+});
+$("theme").addEventListener("change", () => {
+  const presets = {
+    midnight: ["#0b1020", "#1b2b52", "#ff3b6b", "#ffffff", "#c9d4e6"],
+    sunrise: ["#2b1055", "#ff7b54", "#ffd166", "#ffffff", "#ffe9c9"],
+    forest: ["#062b1e", "#0f6b4a", "#8ef2b7", "#ffffff", "#c8f2dc"],
+    paper: ["#f4f1ea", "#dcd6c8", "#c0392b", "#141414", "#4a4a4a"],
+    royal: ["#1a0033", "#5b0ea6", "#ffd60a", "#ffffff", "#e6d5ff"]
+  };
+  const p = presets[$("theme").value];
+  if (p) {
+    $("cBg").value = p[0]; $("cBg2").value = p[1]; $("cAccent").value = p[2];
+    $("cText").value = p[3]; $("cSub").value = p[4];
+  }
+});
+boot();
+</script>
+</body>
+</html>
